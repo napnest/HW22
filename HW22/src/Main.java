@@ -2,90 +2,130 @@
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-//примитивная программа todos
+
+//второй вариант программы по составлению дел
 public class Main {
-    //создаем лист с todos действиями
-    static List<String> list = new ArrayList<>();
+    //регулярное выражение индекса
+    public static final String INDEX_REGEX = "^\\d+";
+    //регулярное выражение индекса и дела
+    public static  final String INDEX_AND_TODO_REGEX="^(\\d+)(\\s+)(.+)";
+    //создаем пустой список дел
+    private static List <String> list =new ArrayList<>();
     public static void main(String[] args) {
-        //используем Scanner для ввода с консоли
-        Scanner scanner = new Scanner(System.in);
-        //в цикле while записываем логику программы
-        while (true) {
-            //вводим действия
-            String task = scanner.nextLine();
-            //выход из цикла
-            if("выход".equalsIgnoreCase(task)){
-                break;
+        System.out.println("\t\tДобро пожаловать в программу по составлению списка дел!");
+        //инфо отображает доступные команды
+        String info = "Доступные команды:\n" +
+                "Добавить {дело}\n" +
+                "Добавить {индекс} {дело}\n" +
+                "Удалить {индекс}\n" +
+                "Изменить {индекс} {дело}\n" +
+                "Печать\n" +
+                "Инфо\n" +
+                "Выход\n";
+        System.out.println(info+ "\n");
+        while(true){
+            System.out.println("Введите команду:");
+            //ввод данных
+            String input = new Scanner(System.in).nextLine();
+            //сохраняем ввод в переменную command в случае, если команда состоит из одного слова
+            //как например Печать или Выход
+            String command = input;
+            //полезная нагрузка - все что находится после команды
+            String payload = "";
+            //если ввод содержит несколько слов, разделяем их в массив через пробелы
+            if(input.contains(" ")) {
+                String[] lexemes = input.split("\\s+", 2);
+                //наши команды
+                command = lexemes[0];
+                //все что идет после команд записывается как один элемент массива
+                payload = lexemes[1].trim();
             }
-            //разделяем полученную строку на элементы массива
-            String [] command = task.split("\\s+");
-            //определяем переменную для извлечения из строки числа
-            int number;
-            //первое слово - указание программе, какие инструкции выполнить
-            switch (command[0]) {
-                //добавляем действие в лист
-                case "Добавить":
-                    //если второй элемент число, то используем его для добавления элемента по индексу
-                    if (command[1].matches("\\d+")){
-                        //временная переменная для извлечения числа
-                        String temp = task.replaceAll("[А-яЁё\\s]+"," ").trim();
-                        //преобразуем строку в массив
-                        String[] split= temp.split("\\s");
-                        //используем первое число как индекс
-                        int position = Integer.parseInt(split[0]);
-                        //условие, если индекс за пределами длины листа, то добавляем действие в конец списка
-                        if (position<0 || position>list.size()){
-                            task = task.replaceAll("^[А-яЁё]+\\s+\\d+", "").trim();
-                            list.add(task);
-                            System.out.println("Нет места под номером "+position+". Дело "+task+" добавлено в конец списка.");
-                            break;
-                        }
-                        //добавляем действие в указанный диапазон
-                        task = task.replaceAll("^[А-яЁё]+\\s+\\d+", "").trim();
-                        list.add(position-1,task);
-                        System.out.println("На "+ position +" место"+" добавлено дело: "+task);
-                        break;
-                    }
-                    //добавляем действие в конец листа
-                    task = task.replaceAll("^[А-яЁё]+\\s+", "").trim();
-                    list.add(task);
-                    System.out.println("Добавлено дело: "+task);
-                    break;
-                //инструкция - вывод на печать элементов листа
-                case "Печать":
-                    for (String i : list) {
-                        System.out.println("Дело: " + i);
-                    }
-                    break;
-                //инструкция - удаление элемента из листа
-                case "Удалить":
-                    //преобразуем из строки в число, данное число индекс для удаления
-                    number = Integer.parseInt(command[1]);
-                    if(number<0 || number>list.size()){
-                        System.out.println("Данного дела нет");
-                        break;
-                    }
-                    System.out.println("Дело : "+list.get(number-1)+" удалено");
-                    list.remove(number-1);
-                    break;
-                //инструкция - изменение элемента листа
-                case "Изменить":
-                    //данное число индекс для изменения элемента
-                    number = Integer.parseInt(command[1]);
-                    //изменяем строку
-                    task = task.replaceAll("^[А-яЁё]+\\s+\\d+\\s+", "").trim();
-                    System.out.print("Дело: "+list.get(number-1)+" ");
-                    list.set(number-1, task);
-                    System.out.println("изменено на "+ list.get(number-1));
-                    break;
-                //неправильный ввод
-                default:
-                    System.out.println("Неправильный ввод, повторите еще раз");
-                    break;
+            //выход из программы
+            if("выход".equalsIgnoreCase(command)){
+                return;
+            }
+            //добавляем дела независимо от регистров
+            if(command.equalsIgnoreCase("Добавить")){
+                //если в деле после команды есть число, то извлекаем его и записываем в индекс
+                //также делаем и с самим делом
+                if(payload.matches(INDEX_AND_TODO_REGEX)){
+                    Integer index = Integer.parseInt(payload.replaceAll(INDEX_AND_TODO_REGEX,"$1").trim());
+                    String todo = payload.replaceAll(INDEX_REGEX,"").trim();
+                    //используем метод, чтобы добавить дело через индекс
+                    add(todo,index-1);
+                }else{
+                    //добавляем дело без индекса
+                    add(payload);
+                }
+            }
+            //удаляем дело с указанием индекса
+            else if(command.equalsIgnoreCase("Удалить")){
+                Integer index = Integer.parseInt(payload);
+                delete(index-1);
+            }
+            //изменяем дело с указанием индекса
+            else if(command.equalsIgnoreCase("Изменить")){
+                Integer index = Integer.parseInt(payload.replaceAll(INDEX_AND_TODO_REGEX,"$1").trim());
+                String todo = payload.replaceAll(INDEX_REGEX,"").trim();
+                edit(todo,index-1);
+            }
+            //выводим список дел
+            else if(command.equalsIgnoreCase("Печать")){
+                print();
+            }
+            else{
+                System.out.println("Ввод неверен!\n"+info);
             }
         }
-
-
     }
+    //перегруженный метод добавления дел без индекса
+    public static void add(String todo){
+        list.add(todo);
+        System.out.println("Дело \""+todo+"\" добавлено");
+    }
+    //перегруженный метод добавления дел через индекс
+    public static void add(String todo, Integer index){
+        if(index<0 || index>= list.size()){
+            list.add(todo);
+            System.out.println("На "+(index+1)+" индексе нет места. Дело добавлено в конец списка.");
+        }
+        else{
+            list.add(index, todo);
+            System.out.println("На "+(index+1)+" место добавлено дело \""+todo+"\"");
+        }
+    }
+    //метод удаления дел через индекс
+    public static void delete(Integer index){
+        if(index<0 || index>=list.size()){
+            System.out.println("Дела под индексом "+(index+1)+" нет в списке.");
+        }
+        else{
+            String todo = list.get(index);
+            list.remove(todo);
+            System.out.println("Дело \""+todo+"\" удалено");
+        }
+    }
+    //метод изменения дел через индекс
+    public static void edit(String newTodo, Integer index){
+        if(index<0 || index>=list.size()){
+            System.out.println("Дела под индексом "+(index+1)+" нет в списке.");
+        }
+        else{
+            String oldTodo = list.get(index);
+            list.set(index, newTodo);
+            System.out.println("Дело \""+oldTodo+"\" заменено на \""+newTodo+"\".");
+        }
+    }
+    //метод печати списка дел
+    public static void print(){
+        if(list.isEmpty()){
+            System.out.println("Список дел пустой");
+            return;
+        }
+        for(String printList:list){
+            System.out.println(printList);
+        }
+    }
+
 
 }
